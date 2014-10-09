@@ -46,8 +46,8 @@ public class Environment {
 		this.variableList = new VariableList();
 	}
 
-	public Variable storeVariable(Class<?> objectType, Object object) {
-		return this.variableList.storeVariable(objectType, object);
+	public Variable storeVariable(Object object) {
+		return this.variableList.storeVariable(object);
 	}
 
 	public Variable retrieveVariable(BigInteger index) {

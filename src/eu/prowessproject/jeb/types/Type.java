@@ -29,9 +29,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * Created by: Pablo Lamela on 1/10/2014
+ * Created by: Pablo Lamela on 8/10/2014
  */
-package eu.prowessproject.jeb.environment;
+package eu.prowessproject.jeb.types;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,24 +45,23 @@ import eu.prowessproject.jeb.serialisation.ErlSerialisationUtils;
 import eu.prowessproject.jeb.utils.ReflectionUtils;
 
 /**
- * Stores a reference to an object or a primitive value
+ * Represents a serialisable representation of a Java type
  */
-public abstract class Variable implements ErlSerialisable {
+public abstract class Type implements ErlSerialisable {
 
-	private static final String VAR_ATOM = "var";
+	private static final String TYPE_ATOM = "type";
 
-	public static final Class<?>[] VARIABLE_CLASSES = { StoredVariable.class, NullConstant.class };
+	public static final Class<?>[] TYPE_CLASSES = { ObjectType.class };
 
-	private static final Map<String, Class<?>> VAR_TYPE_MAP;
+	private static final Map<String, Class<?>> TYPE_TYPE_MAP;
 
 	static {
-		VAR_TYPE_MAP = new HashMap<String, Class<?>>(VARIABLE_CLASSES.length);
-		for (Class<?> varClass : VARIABLE_CLASSES) {
-			VAR_TYPE_MAP.put(ReflectionUtils.getTypeStrFromClass(varClass), varClass);
+		TYPE_TYPE_MAP = new HashMap<String, Class<?>>(TYPE_CLASSES.length);
+		for (Class<?> typeClass : TYPE_CLASSES) {
+			TYPE_TYPE_MAP.put(ReflectionUtils.getTypeStrFromClass(typeClass),
+			    typeClass);
 		}
 	}
-
-	public abstract Object getObject();
 
 	public abstract int getType();
 
@@ -71,20 +70,29 @@ public abstract class Variable implements ErlSerialisable {
 	@Override
 	public OtpErlangObject erlSerialise() {
 		return new OtpErlangTuple(new OtpErlangObject[] {
-		    new OtpErlangAtom(VAR_ATOM), new OtpErlangAtom(this.getTypeStr()),
+		    new OtpErlangAtom(TYPE_ATOM), new OtpErlangAtom(this.getTypeStr()),
 		    this.concreteErlSerialise() });
 	}
 
 	protected abstract OtpErlangObject concreteErlSerialise();
 
-	public static Variable erlDeserialise(Environment env, OtpErlangObject object) {
+	public static Type erlDeserialise(OtpErlangObject object) {
 		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(object,
 		    3);
-		ErlSerialisationUtils.checkIsAtom(tuple[0], VAR_ATOM);
+		ErlSerialisationUtils.checkIsAtom(tuple[0], TYPE_ATOM);
 		String typeStr = ErlSerialisationUtils.getStringFromAtom(tuple[1]);
-		Class<?> varClass = VAR_TYPE_MAP.get(typeStr);
-		return ReflectionUtils.callConcreteDeserialise(Variable.class, varClass,
-		    new Object[] { env, tuple[2] }, new Class<?>[] {Environment.class, OtpErlangObject.class});
+		Class<?> typeClass = TYPE_TYPE_MAP.get(typeStr);
+		return ReflectionUtils.callConcreteDeserialise(Type.class, typeClass,
+		    new Object[] { tuple[2] }, new Class<?>[] { OtpErlangObject.class });
 	}
 
+	public abstract Class<?> getTypeClass();
+
+	public static Class<?> [] mapTypesToClass(Type[] paramTypes) {
+		Class<?> [] classObjects = new Class<?>[paramTypes.length];
+		for (int i = 0; i < paramTypes.length; i++) {
+			classObjects[i] = paramTypes[i].getTypeClass();
+		}
+		return classObjects;
+  }
 }

@@ -50,10 +50,10 @@ public class VariableList {
 		return list.get(index);
 	}
 
-	public Variable storeVariable(Class<?> objectType, Object object) {
+	public Variable storeVariable(Object object) {
 		BigInteger newIndex = this.nextIndex;
 		this.nextIndex = this.nextIndex.add(BigInteger.ONE);
-		Variable variable = new StoredVariable(newIndex, objectType, object);
+		Variable variable = new StoredVariable(newIndex, object);
 		list.put(newIndex, variable);
 		return variable;
 	}

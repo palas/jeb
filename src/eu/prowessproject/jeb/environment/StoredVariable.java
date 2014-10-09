@@ -51,27 +51,20 @@ public class StoredVariable extends Variable {
 
 	private BigInteger index;
 
-	private Class<?> objectType;
-
 	private Object object;
 
 	/**
 	 * @param index
 	 * @param objectType
 	 */
-	StoredVariable(BigInteger index, Class<?> objectType, Object object) {
+	StoredVariable(BigInteger index, Object object) {
 		super();
 		this.index = index;
-		this.objectType = objectType;
 		this.object = object;
 	}
 
 	public BigInteger getIndex() {
 		return index;
-	}
-
-	public Class<?> getObjectType() {
-		return objectType;
 	}
 
 	public Object getObject() {

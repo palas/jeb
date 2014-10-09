@@ -29,48 +29,66 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * Created by: Pablo Lamela on 3/10/2014
+ * Created by: Pablo Lamela on 8/10/2014
  */
-package eu.prowessproject.jeb.environment;
+package eu.prowessproject.jeb.types;
 
-import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangObject;
+import com.ericsson.otp.erlang.OtpErlangString;
 
+import eu.prowessproject.jeb.exceptions.WrongErlangValue;
 import eu.prowessproject.jeb.serialisation.ErlSerialisationUtils;
 
+
 /**
- * Represent a NULL constant with type
+ * Represents the class of an object (not a primitive type)
  */
-public class NullConstant extends Variable {
+public class ObjectType extends Type {
 
-	public static final int TYPE = 2;
+	public static final int TYPE = 1;
 
-	public static final String TYPE_STR = "null";
+	public static final String TYPE_STR = "object_type";
+
+	private Class<?> _class;
+	
+  public ObjectType(Class<?> _class) {
+  	this._class = _class;
+  }
+	
+	@Override
+  public int getType() {
+	  return TYPE;
+  }
 
 	@Override
-	public Object getObject() {
-		return null;
-	}
-
-	@Override
-	public int getType() {
-		return NullConstant.TYPE;
-	}
-
-	@Override
-	public String getTypeStr() {
-		return NullConstant.TYPE_STR;
-	}
+  public String getTypeStr() {
+	  return TYPE_STR;
+  }
 
 	@Override
 	protected OtpErlangObject concreteErlSerialise() {
-		return new OtpErlangAtom(NullConstant.TYPE_STR);
+		return new OtpErlangString(_class.getName());
 	}
 
-	public static Variable concreteErlDeserialise(Environment env,
-	    OtpErlangObject object) {
-		ErlSerialisationUtils.checkIsAtom(object, NullConstant.TYPE_STR);
-		return new NullConstant();
+	public static ObjectType concreteErlDeserialise(OtpErlangObject object) {
+		try {
+	    Class<?> _class = Class.forName(ErlSerialisationUtils.getStringFromString(object));
+	    return new ObjectType(_class);
+    } catch (ClassNotFoundException e) {
+	    throw new WrongErlangValue(e);
+    }
 	}
 
+	@Override
+  public Class<?> getTypeClass() {
+		return this._class;
+  }
+
+	public static Type[] mapCreateFromClass(Class<?>[] parameterTypes) {
+		Type[] typeObjects = new Type[parameterTypes.length];
+		for (int i = 0; i < parameterTypes.length; i++) {
+			typeObjects[i] = new ObjectType(parameterTypes[i]);
+		}
+		return typeObjects;
+  }
 }

@@ -39,8 +39,8 @@
 %%%-------------------------------------------------------------------
 -module(client).
 
--export([syn/0, command/1, method_call/4, var/1, null_var/1, close/0,
-	 send/1, recv/0, example1/0, example2/0]).
+-export([syn/0, command/1, method_call/5, var/1, null_var/0, close/0,
+	 send/1, recv/0, example1/0, example2/0, type_class/1]).
 
 syn() ->
     client:send({msg, syn, syn}),
@@ -56,15 +56,19 @@ command(Command) ->
 	error -> error
     end.
 
-method_call(Class, Method, This, Params) ->
+method_call(Class, Method, This, Params, ParamTypes) ->
     {cmd, method_call, #{class => Class,
 			 method => Method,
 			 this => This,
-			 params => Params}}.
+			 params => Params,
+			 param_types => ParamTypes}}.
+
+type_class(Class) ->
+    {type, object_type, Class}.
 
 var(Num) -> {var, var, Num}.
 
-null_var(Class) -> {var, null, Class}.
+null_var() -> {var, null, null}.
 
 close() ->
     client:send({msg, close, close}),
@@ -85,31 +89,34 @@ example1() ->
     {result, ok_method_call, Var1} =
 	client:command(
 	  client:method_call("java.lang.System", "console",
-			     client:null_var("java.lang.System"), [])),
+			     client:null_var(), [], [])),
     client:close(),
     Var1.
 
 example2() ->
     ok = client:syn(),
+    Main = "eu.prowessproject.jeb.Main",
+    BigInteger = "java.math.BigInteger",
+    TBigInteger = type_class(BigInteger),
     {result, ok_method_call, Ten} =
 	client:command(
-	  client:method_call("eu.prowessproject.jeb.Main", "getTen",
-			     client:null_var("eu.prowessproject.jeb.Main"), [])),
+	  client:method_call(Main, "getTen",
+			     client:null_var(), [], [])),
     io:format("Ten = ~p~n", [Ten]),
     {result, ok_method_call, One} =
 	client:command(
-	  client:method_call("eu.prowessproject.jeb.Main", "getOne",
-			     client:null_var("eu.prowessproject.jeb.Main"), [])),
+	  client:method_call(Main, "getOne",
+			     client:null_var(), [], [])),
     io:format("One = ~p~n", [One]),
     {result, ok_method_call, Eleven} =
 	client:command(
-	  client:method_call("java.math.BigInteger", "add",
-			     Ten, [One])),
+	  client:method_call(BigInteger, "add",
+			     Ten, [One], [TBigInteger])),
     io:format("Eleven = ~p~n", [Eleven]),
     {result, ok_method_call, Null} =
 	client:command(
-	  client:method_call("eu.prowessproject.jeb.Main", "print",
-			     client:null_var("eu.prowessproject.jeb.Main"),
-			     [Eleven])),
+	  client:method_call(Main, "print",
+			     client:null_var(),
+			     [Eleven], [TBigInteger])),
     io:format("Null = ~p~n", [Null]),
     client:close().
