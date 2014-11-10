@@ -51,7 +51,9 @@ public abstract class Type implements ErlSerialisable {
 
 	private static final String TYPE_ATOM = "type";
 
-	public static final Class<?>[] TYPE_CLASSES = { ObjectType.class };
+	public static final Class<?>[] TYPE_CLASSES = { ObjectType.class,
+			ByteType.class, CharType.class, DoubleType.class, FloatType.class,
+			IntType.class, LongType.class, ShortType.class, BooleanType.class };
 
 	private static final Map<String, Class<?>> TYPE_TYPE_MAP;
 
@@ -59,7 +61,7 @@ public abstract class Type implements ErlSerialisable {
 		TYPE_TYPE_MAP = new HashMap<String, Class<?>>(TYPE_CLASSES.length);
 		for (Class<?> typeClass : TYPE_CLASSES) {
 			TYPE_TYPE_MAP.put(ReflectionUtils.getTypeStrFromClass(typeClass),
-			    typeClass);
+					typeClass);
 		}
 	}
 
@@ -70,29 +72,31 @@ public abstract class Type implements ErlSerialisable {
 	@Override
 	public OtpErlangObject erlSerialise() {
 		return new OtpErlangTuple(new OtpErlangObject[] {
-		    new OtpErlangAtom(TYPE_ATOM), new OtpErlangAtom(this.getTypeStr()),
-		    this.concreteErlSerialise() });
+				new OtpErlangAtom(TYPE_ATOM),
+				new OtpErlangAtom(this.getTypeStr()),
+				this.concreteErlSerialise() });
 	}
 
 	protected abstract OtpErlangObject concreteErlSerialise();
 
 	public static Type erlDeserialise(OtpErlangObject object) {
-		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(object,
-		    3);
+		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(
+				object, 3);
 		ErlSerialisationUtils.checkIsAtom(tuple[0], TYPE_ATOM);
 		String typeStr = ErlSerialisationUtils.getStringFromAtom(tuple[1]);
 		Class<?> typeClass = TYPE_TYPE_MAP.get(typeStr);
 		return ReflectionUtils.callConcreteDeserialise(Type.class, typeClass,
-		    new Object[] { tuple[2] }, new Class<?>[] { OtpErlangObject.class });
+				new Object[] { tuple[2] },
+				new Class<?>[] { OtpErlangObject.class });
 	}
 
 	public abstract Class<?> getTypeClass();
 
-	public static Class<?> [] mapTypesToClass(Type[] paramTypes) {
-		Class<?> [] classObjects = new Class<?>[paramTypes.length];
+	public static Class<?>[] mapTypesToClass(Type[] paramTypes) {
+		Class<?>[] classObjects = new Class<?>[paramTypes.length];
 		for (int i = 0; i < paramTypes.length; i++) {
 			classObjects[i] = paramTypes[i].getTypeClass();
 		}
 		return classObjects;
-  }
+	}
 }

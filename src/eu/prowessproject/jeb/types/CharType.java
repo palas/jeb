@@ -33,26 +33,19 @@
  */
 package eu.prowessproject.jeb.types;
 
+import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangObject;
-import com.ericsson.otp.erlang.OtpErlangString;
 
-import eu.prowessproject.jeb.exceptions.WrongErlangValue;
 import eu.prowessproject.jeb.serialisation.ErlSerialisationUtils;
 
 /**
- * Represents the class of an object (not a primitive type)
+ * Represents the class of the primitive type char
  */
-public class ObjectType extends Type {
+public class CharType extends Type {
 
-	public static final int TYPE = 1;
+	public static final int TYPE = 3;
 
-	public static final String TYPE_STR = "object_type";
-
-	private Class<?> _class;
-
-	public ObjectType(Class<?> _class) {
-		this._class = _class;
-	}
+	public static final String TYPE_STR = "char_type";
 
 	@Override
 	public int getType() {
@@ -66,29 +59,17 @@ public class ObjectType extends Type {
 
 	@Override
 	protected OtpErlangObject concreteErlSerialise() {
-		return new OtpErlangString(_class.getName());
+		return new OtpErlangAtom(TYPE_STR);
 	}
 
-	public static ObjectType concreteErlDeserialise(OtpErlangObject object) {
-		try {
-			Class<?> _class = Class.forName(ErlSerialisationUtils
-					.getStringFromString(object));
-			return new ObjectType(_class);
-		} catch (ClassNotFoundException e) {
-			throw new WrongErlangValue(e);
-		}
+	public static CharType concreteErlDeserialise(OtpErlangObject object) {
+		ErlSerialisationUtils.checkIsAtom(object, TYPE_STR);
+		return new CharType();
 	}
 
 	@Override
 	public Class<?> getTypeClass() {
-		return this._class;
+		return char.class;
 	}
 
-	public static Type[] mapCreateFromClass(Class<?>[] parameterTypes) {
-		Type[] typeObjects = new Type[parameterTypes.length];
-		for (int i = 0; i < parameterTypes.length; i++) {
-			typeObjects[i] = new ObjectType(parameterTypes[i]);
-		}
-		return typeObjects;
-	}
 }
