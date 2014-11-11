@@ -40,7 +40,9 @@
 -module(client).
 
 -export([syn/0, command/1, method_call/5, var/1, null_var/0, close/0,
-	 send/1, recv/0, example1/0, example2/0, type_class/1]).
+	 send/1, recv/0, example1/0, example2/0, type_class/1, type_byte/0,
+	 type_char/0, type_double/0, type_float/0, type_int/0, type_long/0,
+	 type_short/0, type_boolean/0]).
 
 syn() ->
     client:send({msg, syn, syn}),
@@ -63,8 +65,15 @@ method_call(Class, Method, This, Params, ParamTypes) ->
 			 params => Params,
 			 param_types => ParamTypes}}.
 
-type_class(Class) ->
-    {type, object_type, Class}.
+type_class(Class) -> {type, object_type, Class}.
+type_byte() -> {type, object_type, byte_type}.
+type_char() -> {type, object_type, char_type}.
+type_double() -> {type, object_type, double_type}.
+type_float() -> {type, object_type, float_type}.
+type_int() -> {type, object_type, int_type}.
+type_long() -> {type, object_type, long_type}.
+type_short() -> {type, object_type, short_type}.
+type_boolean() -> {type, object_type, boolean_type}.
 
 var(Num) -> {var, var, Num}.
 
