@@ -36,60 +36,76 @@ package eu.prowessproject.jeb.commands;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangObject;
-import com.ericsson.otp.erlang.OtpErlangTuple;
 
 import eu.prowessproject.jeb.environment.Environment;
+import eu.prowessproject.jeb.environment.Variable;
+import eu.prowessproject.jeb.exceptions.ReflectionException;
+import eu.prowessproject.jeb.results.ErrorValueStoreResult;
+import eu.prowessproject.jeb.results.OkValueStoreResult;
 import eu.prowessproject.jeb.results.Result;
-import eu.prowessproject.jeb.serialisation.ErlSerialisable;
 import eu.prowessproject.jeb.serialisation.ErlSerialisationUtils;
-import eu.prowessproject.jeb.utils.ReflectionUtils;
 
 /**
- * Represents information describing a command to execute in the JVM using an
- * environment.
+ * A order to execute a method call with information about how.
  */
-public abstract class Command implements ErlSerialisable {
+public class ValueStoreCommand extends Command {
 
-	private static final String CMD_ATOM = "cmd";
+	public static final int TYPE = 3;
 
-	public static final Class<?>[] COMMAND_CLASSES = {
-	    ClearEnvironmentCommand.class, MethodCallCommand.class, ValueStoreCommand.class };
+	public static final String TYPE_STR = "value_store";
 
-	private static final Map<String, Class<?>> CMD_TYPE_MAP;
+	public static final String VALUE_STR = "value";
 
-	static {
-		CMD_TYPE_MAP = new HashMap<String, Class<?>>(COMMAND_CLASSES.length);
-		for (Class<?> cmdClass : COMMAND_CLASSES) {
-			CMD_TYPE_MAP.put(ReflectionUtils.getTypeStrFromClass(cmdClass), cmdClass);
+	private Variable valueVar;
+
+	public ValueStoreCommand(Variable valueVar) {
+		super();
+		this.valueVar = valueVar;
+	}
+
+	protected static Object mapGetObjects(Variable valueObject) {
+		Object value = valueObject.getObject();
+		return value;
+	}
+
+	@Override
+	public Result execute(Environment env) {
+		try {
+			Object result = mapGetObjects(valueVar);
+			return new OkValueStoreResult(env.storeVariable(result));
+		} catch (Throwable a) {
+			return new ErrorValueStoreResult();
 		}
 	}
 
-	public abstract int getType();
-
-	public abstract String getTypeStr();
+	@Override
+	public int getType() {
+		return ValueStoreCommand.TYPE;
+	}
 
 	@Override
-	public OtpErlangObject erlSerialise() {
-		return new OtpErlangTuple(new OtpErlangObject[] {
-		    new OtpErlangAtom(CMD_ATOM), new OtpErlangAtom(this.getTypeStr()),
-		    this.concreteErlSerialise() });
+	public String getTypeStr() {
+		return ValueStoreCommand.TYPE_STR;
 	}
 
-	protected abstract OtpErlangObject concreteErlSerialise();
-
-	public static Command erlDeserialise(Environment env, OtpErlangObject object) {
-		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(object,
-		    3);
-		ErlSerialisationUtils.checkIsAtom(tuple[0], CMD_ATOM);
-		String typeStr = ErlSerialisationUtils.getStringFromAtom(tuple[1]);
-		Class<?> cmdClass = CMD_TYPE_MAP.get(typeStr);
-		return ReflectionUtils.callConcreteDeserialise(Command.class, cmdClass,
-		    new Object[] { env, tuple[2] }, new Class<?>[] { Environment.class,
-		        OtpErlangObject.class });
+	@Override
+	protected OtpErlangObject concreteErlSerialise() {
+		Map<String, OtpErlangObject> map = new HashMap<String, OtpErlangObject>();
+		map.put(VALUE_STR, valueVar.erlSerialise());
+		return ErlSerialisationUtils.serialiseMap(map);
 	}
 
-	public abstract Result execute(Environment env);
+	public static Command concreteErlDeserialise(Environment env,
+			OtpErlangObject object) {
+		Map<String, OtpErlangObject> map = ErlSerialisationUtils
+				.deserialiseMap(object);
+		try {
+			Variable valueVar = Variable.erlDeserialise(env, map.get(VALUE_STR));
+			return new ValueStoreCommand(valueVar);
+		} catch (SecurityException e) {
+			throw new ReflectionException(e);
+		}
+	}
 
 }

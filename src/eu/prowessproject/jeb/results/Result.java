@@ -52,15 +52,18 @@ public abstract class Result implements ErlSerialisable {
 
 	private static final String RESULT_ATOM = "result";
 
-	public static final Class<?>[] RESULT_CLASSES = { OkMethodCallResult.class, ErrorMethodCallResult.class };
+	public static final Class<?>[] RESULT_CLASSES = { OkMethodCallResult.class,
+			ErrorMethodCallResult.class, OkValueStoreResult.class,
+			ErrorValueStoreResult.class };
 
 	private static final Map<String, Class<?>> RESULT_TYPE_MAP;
 
 	static {
 		RESULT_TYPE_MAP = new HashMap<String, Class<?>>(RESULT_CLASSES.length);
 		for (Class<?> resultClass : RESULT_CLASSES) {
-			RESULT_TYPE_MAP.put(ReflectionUtils.getTypeStrFromClass(resultClass),
-			    resultClass);
+			RESULT_TYPE_MAP.put(
+					ReflectionUtils.getTypeStrFromClass(resultClass),
+					resultClass);
 		}
 	}
 
@@ -71,21 +74,22 @@ public abstract class Result implements ErlSerialisable {
 	@Override
 	public OtpErlangObject erlSerialise() {
 		return new OtpErlangTuple(new OtpErlangObject[] {
-		    new OtpErlangAtom(RESULT_ATOM), new OtpErlangAtom(this.getTypeStr()),
-		    this.concreteErlSerialise() });
+				new OtpErlangAtom(RESULT_ATOM),
+				new OtpErlangAtom(this.getTypeStr()),
+				this.concreteErlSerialise() });
 	}
 
 	protected abstract OtpErlangObject concreteErlSerialise();
 
 	public static Result erlDeserialise(Environment env, OtpErlangObject object) {
-		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(object,
-		    3);
+		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(
+				object, 3);
 		ErlSerialisationUtils.checkIsAtom(tuple[0], RESULT_ATOM);
 		String typeStr = ErlSerialisationUtils.getStringFromAtom(tuple[1]);
 		Class<?> resultClass = RESULT_TYPE_MAP.get(typeStr);
-		return ReflectionUtils.callConcreteDeserialise(Result.class, resultClass,
-		    new Object[] { env, tuple[2] }, new Class<?>[] { Environment.class,
-		        OtpErlangObject.class });
+		return ReflectionUtils.callConcreteDeserialise(Result.class,
+				resultClass, new Object[] { env, tuple[2] }, new Class<?>[] {
+						Environment.class, OtpErlangObject.class });
 	}
 
 }
