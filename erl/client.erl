@@ -40,9 +40,9 @@
 -module(client).
 
 -export([syn/0, command/1, method_call/5, var/1, null_var/0, close/0,
-	 send/1, recv/0, example1/0, example2/0, type_class/1, type_byte/0,
-	 type_char/0, type_double/0, type_float/0, type_int/0, type_long/0,
-	 type_short/0, type_boolean/0]).
+	 send/1, recv/0, example1/0, example2/0, example3/0, type_class/1,
+         type_byte/0, type_char/0, type_double/0, type_float/0, type_int/0,
+         type_long/0, type_short/0, type_boolean/0]).
 
 syn() ->
     client:send({msg, syn, syn}),
@@ -127,5 +127,30 @@ example2() ->
 	  client:method_call(Main, "print",
 			     client:null_var(),
 			     [Eleven], [TBigInteger])),
+    io:format("Null = ~p~n", [Null]),
+    client:close().
+
+example3() ->
+    ok = client:syn(),
+    Main = "eu.prowessproject.jeb.Main",
+    BigInteger = "java.math.BigInteger",
+    TBigInteger = type_class(BigInteger),
+    {result, ok_method_call, One} =
+	client:command(
+	  client:method_call(Main, "getOne",
+			     client:null_var(), [], [])),
+    {result,error_method_call,error_method_call} =
+	client:command(
+	  client:method_call(BigInteger, "add",
+			     One, [client:null_var()], [TBigInteger])),
+    {result,error_method_call,error_method_call} =
+	client:command(
+	  client:method_call(BigInteger, "add",
+			     client:null_var(), [client:null_var()], [TBigInteger])),
+    {result, ok_method_call, Null} =
+	client:command(
+	  client:method_call(Main, "print",
+			     client:null_var(),
+			     [One], [TBigInteger])),
     io:format("Null = ~p~n", [Null]),
     client:close().

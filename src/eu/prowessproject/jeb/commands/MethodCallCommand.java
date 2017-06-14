@@ -44,6 +44,7 @@ import com.ericsson.otp.erlang.OtpErlangString;
 import eu.prowessproject.jeb.environment.Environment;
 import eu.prowessproject.jeb.environment.Variable;
 import eu.prowessproject.jeb.exceptions.ReflectionException;
+import eu.prowessproject.jeb.results.ErrorMethodCallResult;
 import eu.prowessproject.jeb.results.OkMethodCallResult;
 import eu.prowessproject.jeb.results.Result;
 import eu.prowessproject.jeb.serialisation.ErlSerialisationUtils;
@@ -77,7 +78,7 @@ public class MethodCallCommand extends Command {
 	private Variable[] paramObjects;
 
 	public MethodCallCommand(Method method, Variable thisObject,
-	    Variable[] paramObjects) {
+			Variable[] paramObjects) {
 		super();
 		this.method = method;
 		this.thisObject = thisObject;
@@ -94,9 +95,13 @@ public class MethodCallCommand extends Command {
 
 	@Override
 	public Result execute(Environment env) {
-		Object result = ReflectionUtils.safeInvoke(this.method,
-		    thisObject.getObject(), mapGetObjects(paramObjects));
-		return new OkMethodCallResult(env.storeVariable(result));
+		try {
+			Object result = ReflectionUtils.safeInvoke(this.method,
+					thisObject.getObject(), mapGetObjects(paramObjects));
+			return new OkMethodCallResult(env.storeVariable(result));
+		} catch (Throwable a) {
+			return new ErrorMethodCallResult();
+		}
 	}
 
 	@Override
@@ -116,23 +121,23 @@ public class MethodCallCommand extends Command {
 		map.put(METHOD_STR, new OtpErlangString(method.getName()));
 		map.put(THIS_STR, thisObject.erlSerialise());
 		map.put(PARAMS_STR,
-		    new OtpErlangList(ErlSerialisationUtils.mapSerialise(paramObjects)));
-		map.put(
-		    PARAM_TYPES_STR,
-		    new OtpErlangList(ErlSerialisationUtils.mapSerialise(ObjectType
-		        .mapCreateFromClass(method.getParameterTypes()))));
+				new OtpErlangList(ErlSerialisationUtils
+						.mapSerialise(paramObjects)));
+		map.put(PARAM_TYPES_STR,
+				new OtpErlangList(ErlSerialisationUtils.mapSerialise(ObjectType
+						.mapCreateFromClass(method.getParameterTypes()))));
 		return ErlSerialisationUtils.serialiseMap(map);
 	}
 
 	public static Command concreteErlDeserialise(Environment env,
-	    OtpErlangObject object) {
+			OtpErlangObject object) {
 		Map<String, OtpErlangObject> map = ErlSerialisationUtils
-		    .deserialiseMap(object);
+				.deserialiseMap(object);
 		try {
-			OtpErlangObject[] paramArray = ErlSerialisationUtils.getArrayFromList(map
-			    .get(PARAMS_STR));
+			OtpErlangObject[] paramArray = ErlSerialisationUtils
+					.getArrayFromList(map.get(PARAMS_STR));
 			OtpErlangObject[] paramTypeArray = ErlSerialisationUtils
-			    .getArrayFromList(map.get(PARAM_TYPES_STR));
+					.getArrayFromList(map.get(PARAM_TYPES_STR));
 			Variable[] paramObjects = new Variable[paramArray.length];
 			Type[] paramTypes = new Type[paramTypeArray.length];
 			for (int i = 0; i < paramObjects.length; i++) {
@@ -140,16 +145,20 @@ public class MethodCallCommand extends Command {
 				paramTypes[i] = Type.erlDeserialise(paramTypeArray[i]);
 			}
 			Method method = Class.forName(
-			    ErlSerialisationUtils.getStringFromString(map.get(CLASS_STR)))
-			    .getMethod(
-			        ErlSerialisationUtils.getStringFromString(map.get(METHOD_STR)),
-			        Type.mapTypesToClass(paramTypes));
-			Variable thisObject = Variable.erlDeserialise(env, map.get(THIS_STR));
+					ErlSerialisationUtils.getStringFromString(map
+							.get(CLASS_STR)))
+					.getMethod(
+							ErlSerialisationUtils.getStringFromString(map
+									.get(METHOD_STR)),
+							Type.mapTypesToClass(paramTypes));
+			Variable thisObject = Variable.erlDeserialise(env,
+					map.get(THIS_STR));
 			for (int i = 0; i < paramObjects.length; i++) {
 				paramObjects[i] = Variable.erlDeserialise(env, paramArray[i]);
 			}
 			return new MethodCallCommand(method, thisObject, paramObjects);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException e) {
+		} catch (ClassNotFoundException | NoSuchMethodException
+				| SecurityException e) {
 			throw new ReflectionException(e);
 		}
 	}

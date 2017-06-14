@@ -52,7 +52,7 @@ public abstract class Result implements ErlSerialisable {
 
 	private static final String RESULT_ATOM = "result";
 
-	public static final Class<?>[] RESULT_CLASSES = { OkMethodCallResult.class };
+	public static final Class<?>[] RESULT_CLASSES = { OkMethodCallResult.class, ErrorMethodCallResult.class };
 
 	private static final Map<String, Class<?>> RESULT_TYPE_MAP;
 
