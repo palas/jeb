@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.ericsson.otp.erlang.OtpErlangAtom;
+import com.ericsson.otp.erlang.OtpErlangException;
 import com.ericsson.otp.erlang.OtpErlangList;
 import com.ericsson.otp.erlang.OtpErlangLong;
 import com.ericsson.otp.erlang.OtpErlangMap;
@@ -90,6 +91,13 @@ public abstract class ErlSerialisationUtils {
 		if (object instanceof OtpErlangString) {
 			OtpErlangString atom = (OtpErlangString) object;
 			return atom.stringValue();
+		} else if (object instanceof OtpErlangList) {
+			OtpErlangList atom = (OtpErlangList) object;
+			try {
+				return atom.stringValue();
+			} catch (OtpErlangException e) {
+				throw new WrongErlangValue(e); // Should be an OtpErlangString in the first place
+			}
 		} else {
 			throw new WrongTypeOfErlangValue(OtpErlangString.class, object.getClass());
 		}

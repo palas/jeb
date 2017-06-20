@@ -138,6 +138,21 @@ example2() ->
 			     client:null_var(),
 			     [Eleven], [TBigInteger])),
     io:format("Null = ~p~n", [Null]),
+    io:format("~p~n", [
+	client:command(
+	  client:method_call("", "add",
+			     Eleven, [One], [TBigInteger]))]),
+    {result, ok_method_call, Twelve} =
+	client:command(
+	  client:method_call("", "add",
+			     Eleven, [One], [TBigInteger])),
+    io:format("Twelve = ~p~n", [Twelve]),
+    {result, ok_method_call, Null2} =
+	client:command(
+	  client:method_call(Main, "print",
+			     client:null_var(),
+			     [Twelve], [TBigInteger])),
+    io:format("Null = ~p~n", [Null2]),
     client:close().
 
 example3() ->

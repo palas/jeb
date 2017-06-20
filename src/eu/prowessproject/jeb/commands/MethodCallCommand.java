@@ -144,15 +144,17 @@ public class MethodCallCommand extends Command {
 				paramObjects[i] = Variable.erlDeserialise(env, paramArray[i]);
 				paramTypes[i] = Type.erlDeserialise(paramTypeArray[i]);
 			}
-			Method method = Class.forName(
-					ErlSerialisationUtils.getStringFromString(map
-							.get(CLASS_STR)))
-					.getMethod(
-							ErlSerialisationUtils.getStringFromString(map
-									.get(METHOD_STR)),
-							Type.mapTypesToClass(paramTypes));
 			Variable thisObject = Variable.erlDeserialise(env,
 					map.get(THIS_STR));
+			String thisClassName = ErlSerialisationUtils.getStringFromString(map.get(CLASS_STR));
+			Class<?> thisClass;
+			if ((thisObject.getObject() != null) && (thisClassName.isEmpty())) {
+				thisClass = thisObject.getObject().getClass();
+			} else {
+				thisClass = Class.forName(thisClassName);
+			}
+			Method method = thisClass.getMethod(ErlSerialisationUtils.getStringFromString(map.get(METHOD_STR)),
+					Type.mapTypesToClass(paramTypes));
 			for (int i = 0; i < paramObjects.length; i++) {
 				paramObjects[i] = Variable.erlDeserialise(env, paramArray[i]);
 			}
@@ -162,5 +164,4 @@ public class MethodCallCommand extends Command {
 			throw new ReflectionException(e);
 		}
 	}
-
 }
