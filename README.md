@@ -13,4 +13,4 @@ An illustrative example can be seen in the combination of the class `Main` in Ja
 
 The Java library depends on the library JInterface included in the Erlang distribution.
 
-Both the Java library and the Erlang API relay on maps.
+Both the Java library and the Erlang API rely on maps.
