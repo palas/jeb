@@ -100,7 +100,7 @@ send(Msg) ->
 recv() ->
     receive
 	{msg, _, _} = Msg -> Msg
-    after 100 -> error
+    after 1000 -> error
     end.
 
 example1() ->

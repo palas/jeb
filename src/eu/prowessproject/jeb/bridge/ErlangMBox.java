@@ -79,6 +79,7 @@ public class ErlangMBox {
 		try {
 			OtpMsg msg = mbox.receiveMsg();
 			setRecipientPid(msg.getSenderPid());
+			//System.out.println(msg.getMsg());
 			return Message.erlDeserialise(msg.getMsg(), env);
 		} catch (OtpErlangExit | OtpErlangDecodeException e) {
 			throw new ErrorReceivingMessage(e);

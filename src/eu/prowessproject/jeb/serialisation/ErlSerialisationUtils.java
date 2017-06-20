@@ -39,6 +39,7 @@ import java.util.Map;
 
 import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangException;
+import com.ericsson.otp.erlang.OtpErlangInt;
 import com.ericsson.otp.erlang.OtpErlangList;
 import com.ericsson.otp.erlang.OtpErlangLong;
 import com.ericsson.otp.erlang.OtpErlangMap;
@@ -117,6 +118,14 @@ public abstract class ErlSerialisationUtils {
 		if (object instanceof OtpErlangList) {
 			OtpErlangList value = (OtpErlangList) object;
 			return value.elements();
+		} else if (object instanceof OtpErlangString) {
+			OtpErlangString ostring = (OtpErlangString) object;
+			String str = ostring.toString();
+			OtpErlangObject[] ao = new OtpErlangObject[str.toString().length()];
+			for (int i = 0; i < str.length(); ++i) {
+				ao[i] = new OtpErlangInt(str.charAt(i));
+			}
+			return ao;
 		} else {
 			throw new WrongTypeOfErlangValue(OtpErlangList.class, object.getClass());
 		}

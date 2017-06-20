@@ -85,6 +85,12 @@ public class MethodCallCommand extends Command {
 		this.paramObjects = paramObjects;
 	}
 
+	public MethodCallCommand() {
+		this.method = null;
+		this.thisObject = null;
+		this.paramObjects = null;
+	}
+
 	protected static Object[] mapGetObjects(Variable[] paramObjects) {
 		Object[] objectObjects = new Object[paramObjects.length];
 		for (int i = 0; i < paramObjects.length; i++) {
@@ -95,12 +101,16 @@ public class MethodCallCommand extends Command {
 
 	@Override
 	public Result execute(Environment env) {
-		try {
-			Object result = ReflectionUtils.safeInvoke(this.method,
-					thisObject.getObject(), mapGetObjects(paramObjects));
-			return new OkMethodCallResult(env.storeVariable(result));
-		} catch (Throwable a) {
+		if (this.method == null) {
 			return new ErrorMethodCallResult();
+		} else {
+			try {
+				Object result = ReflectionUtils.safeInvoke(this.method,
+						thisObject.getObject(), mapGetObjects(paramObjects));
+				return new OkMethodCallResult(env.storeVariable(result));
+			} catch (Throwable a) {
+				return new ErrorMethodCallResult();
+			}
 		}
 	}
 
@@ -148,17 +158,22 @@ public class MethodCallCommand extends Command {
 					map.get(THIS_STR));
 			String thisClassName = ErlSerialisationUtils.getStringFromString(map.get(CLASS_STR));
 			Class<?> thisClass;
-			if ((thisObject.getObject() != null) && (thisClassName.isEmpty())) {
-				thisClass = thisObject.getObject().getClass();
+			if ((thisObject.getObject() == null) && (thisClassName.isEmpty())) {
+				return new MethodCallCommand();
 			} else {
-				thisClass = Class.forName(thisClassName);
+				if ((thisObject.getObject() != null) && (thisClassName.isEmpty())) {
+					thisClass = thisObject.getObject().getClass();
+				} else {
+					thisClass = Class.forName(thisClassName);
+				}
+				Method method = thisClass.getDeclaredMethod(ErlSerialisationUtils.getStringFromString(map.get(METHOD_STR)),
+						Type.mapTypesToClass(paramTypes));
+				method.setAccessible(true);
+				for (int i = 0; i < paramObjects.length; i++) {
+					paramObjects[i] = Variable.erlDeserialise(env, paramArray[i]);
+				}
+				return new MethodCallCommand(method, thisObject, paramObjects);
 			}
-			Method method = thisClass.getMethod(ErlSerialisationUtils.getStringFromString(map.get(METHOD_STR)),
-					Type.mapTypesToClass(paramTypes));
-			for (int i = 0; i < paramObjects.length; i++) {
-				paramObjects[i] = Variable.erlDeserialise(env, paramArray[i]);
-			}
-			return new MethodCallCommand(method, thisObject, paramObjects);
 		} catch (ClassNotFoundException | NoSuchMethodException
 				| SecurityException e) {
 			throw new ReflectionException(e);
