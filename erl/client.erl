@@ -75,14 +75,14 @@ new_call(Class, Params, ParamTypes) ->
 		      param_types => ParamTypes}}.
 
 type_class(Class) -> {type, object_type, Class}.
-type_byte() -> {type, object_type, byte_type}.
-type_char() -> {type, object_type, char_type}.
-type_double() -> {type, object_type, double_type}.
-type_float() -> {type, object_type, float_type}.
-type_int() -> {type, object_type, int_type}.
-type_long() -> {type, object_type, long_type}.
-type_short() -> {type, object_type, short_type}.
-type_boolean() -> {type, object_type, boolean_type}.
+type_byte() -> {type, byte_type, byte_type}.
+type_char() -> {type, char_type, char_type}.
+type_double() -> {type, double_type, double_type}.
+type_float() -> {type, float_type, float_type}.
+type_int() -> {type, int_type, int_type}.
+type_long() -> {type, long_type, long_type}.
+type_short() -> {type, short_type, short_type}.
+type_boolean() -> {type, boolean_type, boolean_type}.
 
 var(Num) -> {var, var, Num}.
 
