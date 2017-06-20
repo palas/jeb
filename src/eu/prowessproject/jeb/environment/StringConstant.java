@@ -29,62 +29,51 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * Created by: Pablo Lamela on 1/10/2014
+ * Created by: Pablo Lamela on 3/10/2014
  */
 package eu.prowessproject.jeb.environment;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.ericsson.otp.erlang.OtpErlangAtom;
 import com.ericsson.otp.erlang.OtpErlangObject;
-import com.ericsson.otp.erlang.OtpErlangTuple;
+import com.ericsson.otp.erlang.OtpErlangString;
 
-import eu.prowessproject.jeb.serialisation.ErlSerialisable;
 import eu.prowessproject.jeb.serialisation.ErlSerialisationUtils;
-import eu.prowessproject.jeb.utils.ReflectionUtils;
 
 /**
- * Stores a reference to an object or a primitive value
+ * Represent a NULL constant with type
  */
-public abstract class Variable implements ErlSerialisable {
+public class StringConstant extends Variable {
 
-	private static final String VAR_ATOM = "var";
+	public static final int TYPE = 3;
 
-	public static final Class<?>[] VARIABLE_CLASSES = { StoredVariable.class, NullConstant.class, StringConstant.class };
+	public static final String TYPE_STR = "string";
 
-	private static final Map<String, Class<?>> VAR_TYPE_MAP;
-
-	static {
-		VAR_TYPE_MAP = new HashMap<String, Class<?>>(VARIABLE_CLASSES.length);
-		for (Class<?> varClass : VARIABLE_CLASSES) {
-			VAR_TYPE_MAP.put(ReflectionUtils.getTypeStrFromClass(varClass), varClass);
-		}
-	}
-
-	public abstract Object getObject();
-
-	public abstract int getType();
-
-	public abstract String getTypeStr();
+	private String _string;
 
 	@Override
-	public OtpErlangObject erlSerialise() {
-		return new OtpErlangTuple(new OtpErlangObject[] {
-		    new OtpErlangAtom(VAR_ATOM), new OtpErlangAtom(this.getTypeStr()),
-		    this.concreteErlSerialise() });
+	public Object getObject() {
+		return _string;
 	}
 
-	protected abstract OtpErlangObject concreteErlSerialise();
+	@Override
+	public int getType() {
+		return StringConstant.TYPE;
+	}
 
-	public static Variable erlDeserialise(Environment env, OtpErlangObject object) {
-		OtpErlangObject[] tuple = ErlSerialisationUtils.tupleOfSizeToArray(object,
-		    3);
-		ErlSerialisationUtils.checkIsAtom(tuple[0], VAR_ATOM);
-		String typeStr = ErlSerialisationUtils.getStringFromAtom(tuple[1]);
-		Class<?> varClass = VAR_TYPE_MAP.get(typeStr);
-		return ReflectionUtils.callConcreteDeserialise(Variable.class, varClass,
-		    new Object[] { env, tuple[2] }, new Class<?>[] {Environment.class, OtpErlangObject.class});
+	@Override
+	public String getTypeStr() {
+		return StringConstant.TYPE_STR;
+	}
+
+	@Override
+	protected OtpErlangObject concreteErlSerialise() {
+		return new OtpErlangString(this._string);
+	}
+
+	public static Variable concreteErlDeserialise(Environment env,
+			OtpErlangObject object) {
+		StringConstant sc = new StringConstant();
+		sc._string = ErlSerialisationUtils.getStringFromString(object);
+		return sc;
 	}
 
 }

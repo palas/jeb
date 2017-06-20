@@ -39,10 +39,11 @@
 %%%-------------------------------------------------------------------
 -module(client).
 
--export([syn/0, command/1, method_call/5, store_var/1, var/1, null_var/0, close/0,
-	 send/1, recv/0, example1/0, example2/0, example3/0, type_class/1,
-         type_byte/0, type_char/0, type_double/0, type_float/0, type_int/0,
-         type_long/0, type_short/0, type_boolean/0]).
+-export([syn/0, command/1, method_call/5, new_call/3, var/1, null_var/0,
+	 string_const/1, close/0, send/1, recv/0, example1/0, example2/0,
+	 example3/0, example4/0, type_class/1, type_byte/0, type_char/0,
+	 type_double/0, type_float/0, type_int/0, type_long/0, type_short/0,
+	 type_boolean/0]).
 
 syn() ->
     client:send({msg, syn, syn}),
@@ -65,8 +66,10 @@ method_call(Class, Method, This, Params, ParamTypes) ->
 			 params => Params,
 			 param_types => ParamTypes}}.
 
-store_var(Value) ->
-    {cmd, value_store, #{value => Value}}.
+new_call(Class, Params, ParamTypes) ->
+    {cmd, new_call, #{class => Class,
+                      params => Params,
+		      param_types => ParamTypes}}.
 
 type_class(Class) -> {type, object_type, Class}.
 type_byte() -> {type, object_type, byte_type}.
@@ -81,6 +84,7 @@ type_boolean() -> {type, object_type, boolean_type}.
 var(Num) -> {var, var, Num}.
 
 null_var() -> {var, null, null}.
+string_const(String) -> {var, string, String}.
 
 close() ->
     client:send({msg, close, close}),
@@ -134,6 +138,34 @@ example2() ->
     client:close().
 
 example3() ->
+    ok = client:syn(),
+    Main = "eu.prowessproject.jeb.Main",
+    String = "java.lang.String",
+    TString = type_class(String),
+    Integer = "java.lang.Integer",
+    TInteger = type_class(Integer),
+    {result, ok_method_call, Ten} =
+	client:command(
+	  client:new_call(Integer, [client:string_const("10")], [TString])),
+    io:format("Ten = ~p~n", [Ten]),
+    {result, ok_method_call, One} =
+	client:command(
+	  client:new_call(Integer, [client:string_const("1")], [TString])),
+    io:format("One = ~p~n", [One]),
+    {result, ok_method_call, Eleven} =
+	client:command(
+	  client:method_call(Main, "add",
+			     client:null_var(), [One, Ten], [TInteger, TInteger])),
+    io:format("Eleven = ~p~n", [Eleven]),
+    {result, ok_method_call, Null} =
+	client:command(
+	  client:method_call(Main, "print",
+			     client:null_var(),
+			     [Eleven], [TInteger])),
+    io:format("Null = ~p~n", [Null]),
+    client:close().
+
+example4() ->
     ok = client:syn(),
     Main = "eu.prowessproject.jeb.Main",
     BigInteger = "java.math.BigInteger",

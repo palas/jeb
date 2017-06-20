@@ -50,6 +50,14 @@ public abstract class Main {
 	public static BigInteger getOne() {
 		return BigInteger.ONE;
 	}
+
+	public static Integer add(Integer a, Integer b) {
+		return a + b;
+	}
+
+	public static void print(Integer integer) {
+		System.out.println("The number is: " + integer);
+	}
 	
 	public static void print(BigInteger bigInteger) {
 		System.out.println("The number is: " + bigInteger);

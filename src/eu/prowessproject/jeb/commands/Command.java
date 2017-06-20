@@ -55,7 +55,7 @@ public abstract class Command implements ErlSerialisable {
 	private static final String CMD_ATOM = "cmd";
 
 	public static final Class<?>[] COMMAND_CLASSES = {
-	    ClearEnvironmentCommand.class, MethodCallCommand.class, ValueStoreCommand.class };
+	    ClearEnvironmentCommand.class, MethodCallCommand.class, ValueStoreCommand.class, NewCallCommand.class };
 
 	private static final Map<String, Class<?>> CMD_TYPE_MAP;
 

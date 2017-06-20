@@ -33,6 +33,7 @@
  */
 package eu.prowessproject.jeb.utils;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -118,6 +119,15 @@ public abstract class ReflectionUtils {
 			return method.invoke(thisObject, paramObjects);
 		} catch (IllegalAccessException | IllegalArgumentException
 		    | InvocationTargetException e) {
+			throw new ReflectionException(e);
+		}
+	}
+
+	public static Object safeInvokeNew(Constructor<?> constructor, Object [] paramObjects) {
+		try {
+			return constructor.newInstance(paramObjects);
+		} catch (IllegalAccessException | IllegalArgumentException
+		    | InvocationTargetException | InstantiationException e) {
 			throw new ReflectionException(e);
 		}
 	}
