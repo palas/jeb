@@ -39,11 +39,11 @@
 %%%-------------------------------------------------------------------
 -module(client).
 
--export([syn/0, command/1, method_call/5, new_call/3, var/1, null_var/0,
-	 string_const/1, close/0, send/1, recv/0, example1/0, example2/0,
-	 example3/0, example4/0, type_class/1, type_byte/0, type_char/0,
-	 type_double/0, type_float/0, type_int/0, type_long/0, type_short/0,
-	 type_boolean/0]).
+-export([syn/0, command/1, method_call/5, store_var/1, new_call/3, var/1,
+	 null_var/0, string_const/1, close/0, send/1, recv/0, example1/0,
+	 example2/0, example3/0, example4/0, type_class/1, type_byte/0,
+	 type_char/0, type_double/0, type_float/0, type_int/0, type_long/0,
+	 type_short/0, type_boolean/0]).
 
 syn() ->
     client:send({msg, syn, syn}),
@@ -65,6 +65,9 @@ method_call(Class, Method, This, Params, ParamTypes) ->
 			 this => This,
 			 params => Params,
 			 param_types => ParamTypes}}.
+
+store_var(Value) ->
+    {cmd, value_store, #{value => Value}}.
 
 new_call(Class, Params, ParamTypes) ->
     {cmd, new_call, #{class => Class,
