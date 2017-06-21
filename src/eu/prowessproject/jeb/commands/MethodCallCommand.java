@@ -156,21 +156,22 @@ public class MethodCallCommand extends Command {
 			}
 			Variable thisObject = Variable.erlDeserialise(env,
 					map.get(THIS_STR));
-			String thisClassName = ErlSerialisationUtils.getStringFromString(map.get(CLASS_STR));
+			String thisClassName = ErlSerialisationUtils
+					.getStringFromString(map.get(CLASS_STR));
 			Class<?> thisClass;
 			if ((thisObject.getObject() == null) && (thisClassName.isEmpty())) {
 				return new MethodCallCommand();
 			} else {
-				if ((thisObject.getObject() != null) && (thisClassName.isEmpty())) {
+				if ((thisObject.getObject() != null)
+						&& (thisClassName.isEmpty())) {
 					thisClass = thisObject.getObject().getClass();
 				} else {
 					thisClass = Class.forName(thisClassName);
 				}
-				Method method = thisClass.getDeclaredMethod(ErlSerialisationUtils.getStringFromString(map.get(METHOD_STR)),
-						Type.mapTypesToClass(paramTypes));
-				method.setAccessible(true);
+				Method method = getMethodFromThisOrSuperClass(map, paramTypes, thisClass);
 				for (int i = 0; i < paramObjects.length; i++) {
-					paramObjects[i] = Variable.erlDeserialise(env, paramArray[i]);
+					paramObjects[i] = Variable.erlDeserialise(env,
+							paramArray[i]);
 				}
 				return new MethodCallCommand(method, thisObject, paramObjects);
 			}
@@ -178,5 +179,25 @@ public class MethodCallCommand extends Command {
 				| SecurityException e) {
 			throw new ReflectionException(e);
 		}
+	}
+
+	private static Method getMethodFromThisOrSuperClass(
+			Map<String, OtpErlangObject> map, Type[] paramTypes,
+			Class<?> thisClass) throws NoSuchMethodException {
+		Method method;
+		Class<?> current = thisClass;
+		do {
+			try {
+				method = current.getDeclaredMethod(ErlSerialisationUtils
+						.getStringFromString(map.get(METHOD_STR)), Type
+						.mapTypesToClass(paramTypes));
+				method.setAccessible(true);
+				return method;
+			} catch (NoSuchMethodException e) {
+			}
+		} while ((current = current.getSuperclass()) != null);
+		return thisClass.getDeclaredMethod(ErlSerialisationUtils
+				.getStringFromString(map.get(METHOD_STR)), Type
+				.mapTypesToClass(paramTypes));
 	}
 }
